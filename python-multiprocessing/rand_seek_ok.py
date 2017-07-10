@@ -3,79 +3,88 @@ import sys
 import random
 import traceback
 import time
-import threading
-import queue
-import logging
+from multiprocessing.pool import ThreadPool as Pool
+import multiprocessing
 
-log = logging.getLogger('VMOPs')
-log.setLevel(logging.DEBUG)
 
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
+def error(msg, *args):
+    return multiprocessing.get_logger().error(msg, *args)
+class LogExceptions(object):
+    def __init__(self, callable):
+        self.__callable = callable
+        return
+    def __call__(self, *args, **kwargs):
+        try:
+            result = self.__callable(*args, **kwargs)
+        except Exception as e:
+            # Here we add some debugging help. If multiprocessing's
+            # debugging is on, it will arrange to log the traceback
+            error(traceback.format_exc())
+            # Re-raise the original exception so the Pool worker can
+            # clean up
+            raise
+        # It was fine, give a normal answer
+        return result
+    pass
 
-ft = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(ft)
-
-log.addHandler(ch)
-
-lock = threading.RLock()
+class LoggingPool(Pool):
+    def apply_async(self, func, args=(), kwds={}, callback=None):
+        return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
 
 def vmops(seed):
     def dt():
-        print('dt')
-        log.debug('log dt')
-        time.sleep(4)
+        #print('dt')
+        time.sleep(1)
         return ''
 
     def iozone():
         time.sleep(2)
-        print('iozone')
+        #print('iozone')
         return ''
 
     def fio():
-        aaa
-        print('fio')
+        #print('fio')
         time.sleep(1)
         return ''
 
     def svmotion():
         time.sleep(1)
-        print('svmotion')
+        #print('svmotion')
         return  ''
 
     def poweroff():
-        print('poweroff')
+        #print('poweroff')
         time.sleep(3)
         return 'off'
 
     def addvmdk():
         time.sleep(1)
-        print('addvmdk')
+        #print('addvmdk')
         return ''
 
     def addremovevmdk():
         time.sleep(4)
-        print('addremovevmdk')
+        #print('addremovevmdk')
         return ''
 
     def svmotion():
         time.sleep(2)
-        print('svmotion')
+        #print('svmotion')
         return ''
 
     def poweron():
-        print('poweron')
+        #print('poweron')
         time.sleep(1)
         return 'on'
 
     def resume():
         time.sleep(1)
-        print('resume')
+        #print('resume')
         return 'on'
 
     def suspend():
         time.sleep(1)
-        print('resume')
+        #print('resume')
         return 'suspend'
 
     def updateWeight(idx, weight):
@@ -103,28 +112,11 @@ def vmops(seed):
         return i
 
     def runop(weight, steps):
-        #global stop
-        #print('runop')
-        try:
-            cur_state = 'on'
-            for op in steps:
-                if stop:
-                    break
-                #print(op)
-                name_to_op[op]()
-                sys.stdout.flush()
-                if op == 'dt':
-                    resultQ.put(False)
-                    continue
-                resultQ.put(True)
-                #stop = True
-        except Exception as e:
-            #print('----%s--------hit except---%s--------\n%s' % (threading.current_thread(), e, traceback.print_exc()))
-            #print(e)
-            #print(traceback.print_exc())
-            log.error('%s Hit %s exception' % ('haha', 'heihei'), exc_info=True)
-            resultQ.put(False)
-            raise e
+        cur_state = 'on'
+        for op in steps:
+            if not stop:
+                break
+            name_to_op[op]()
 
     def sortops(op):
         return op.__name__
@@ -139,7 +131,6 @@ def vmops(seed):
     stop = False
     name_to_op = {}
     steps = []
-    resultQ = queue.Queue()
     vm_num =  len(seed) if seed else 2
     state = {'on' : (dt, fio, iozone, svmotion, poweroff, suspend), 
              'off' : (addremovevmdk, poweron),
@@ -166,7 +157,7 @@ def vmops(seed):
         weight = [1] * len(ops)
         random.seed(i)
         idxs=[]
-        for _ in range(50):
+        for _ in range(10000):
            idx = selectOp(cur_state, ops, weight, state)
            idxs.append(idx)
            op = ops[idx]
@@ -177,30 +168,20 @@ def vmops(seed):
         #print (i, weight, sub)
         print (weight)
         #print (idxs)
-    print (steps)
-    threads = []
+    #print (steps)
     #sys.exit(1)
+    multiprocessing.log_to_stderr()
+    pool = LoggingPool(processes=vm_num)
     for w, s in zip(weight, steps):
         #print('id==', id(w),id(s), w, s)
-        #time.sleep(1)
-        t = threading.Thread(target=runop, args = (w, s))
-        #t.setDaemon(False)
-        threads.append(t)
-        t.start()
-    print(threads)
+        time.sleep(1)
+        pool.apply_async(runop, args = (w, s))
+    pool.close()
     while time.time() - start < 20:
-        print('in while')
         time.sleep(1)
     print('Waiting for the testing finished...')
-    lock.acquire()
     stop = True
-    lock.release()
-    for t in threads:
-        t.join()
-    print(resultQ)
-    print(resultQ.qsize())
-    while not resultQ.empty():
-        print(resultQ.get())
+    pool.join()
     #print(steps)
     #print(weight)
 
