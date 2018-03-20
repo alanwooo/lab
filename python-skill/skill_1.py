@@ -34,7 +34,7 @@ class Attribute():
         print('in __getattr__ %s' % name)
         if name == 'test':
             return 'we want test'
-        return 'can not found'
+        return 'can not find'
     def __setattr__(self, name, value):
         print('in __setattr__')
         if name == 'z':
@@ -57,6 +57,13 @@ print('----------------------------------')
 print(a.y)
 print('----------------------------------')
 print(a.test)
+print('----------------------------------')
+print('hasattr b %s' % hasattr(a, 'b'))
+print(getattr(a, 'b', 3333))
+a.b = 2222
+print(getattr(a, 'b', 3333))
+setattr(a, 'b', 4444)
+print(a.b)
 print('----------------------------------')
 a.foo('~~~')
 print('----------------------------------')
