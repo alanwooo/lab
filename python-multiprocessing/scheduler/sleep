@@ -1,0 +1,21 @@
+#!/bin/bash
+
+trap 'echo "you hit Ctrl-C\, now exiting.."; exit 1' SIGINT
+tm=$1
+xx=`expr $tm % 13`
+if [ $xx -eq 0 ]; then
+    echo "haha 1800 $1"
+    tm=1800
+fi
+i=1
+echo "$0 will sleep $tm, pid $$"
+while true; do
+    echo "$$ sleep 1 sec"
+    sleep 2
+    i=`expr $i + 1`
+    if [ $i -gt $tm ]; then
+       break
+    fi
+done
+echo 'Done...'
+exit 0
