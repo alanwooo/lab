@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "=====$VMBLD============="
 trap 'echo "you hit Ctrl-C\, now exiting.."; exit 1' SIGINT
 tm=$1
 xx=`expr $tm % 13`
