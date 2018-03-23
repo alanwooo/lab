@@ -75,11 +75,11 @@ class Worker():
             os.killpg(self.proc.pid, signal.SIGINT)
         except ProcessLookupError as e:
             return
-        try:
-            self.proc.wait(60)
-        except TimeoutExpired as e:
-            print(e)
-            self.proc.terminate()
+        #try:
+        #    self.proc.wait(60)
+        #except TimeoutExpired as e:
+        #    print(e)
+        #    self.proc.terminate()
     def run(self):
         self.submit()
         start = time.time()
@@ -132,8 +132,9 @@ class WorkerPool(ThreadPoolExecutor):
         #print(self, exc_type, exc_val, exc_tb)
         if exc_type is CustomExitError:
             print('killed by the ctrl-c')
-            return super().__exit__(None, None, None)
-        super().__exit__(exc_type, exc_val, exc_tb)
+            super().__exit__(None, None, None)
+        else:
+            super().__exit__(exc_type, exc_val, exc_tb)
 def main():
     esx = EsxHost()
     job2worker = {}
