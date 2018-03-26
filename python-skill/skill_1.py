@@ -107,3 +107,29 @@ print(d.name)
 d.value = 1000
 print(d.value)
 print(d('name'))
+
+
+
+
+print('\n\n\n\n')
+#########################################
+class MetaClass(type):
+    def __new__(cls, name, bases, attr):
+        for key in list(attr.keys()):
+            if key.startswith('__'):
+                continue
+            attr[key.upper()] = attr[key]
+            attr.pop(key)
+        return super().__new__(cls, name, bases, attr)
+
+class UserClass(metaclass=MetaClass):
+    name = 'name'
+    def __init__(self):
+        self.a = 'a'
+    def add(self, x):
+        print(self.a + x)
+
+print(dir(UserClass))
+u = UserClass()
+print(dir(u))
+#print(u.A)
