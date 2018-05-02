@@ -1,6 +1,7 @@
 /*gcc -Wall -g list.c  -o list*/
 # include <stdio.h>
 # include <stdlib.h>
+# include <stdbool.h> /*import boot: true, false*/
 
 typedef struct ListNode {
     struct ListNode *next;
@@ -111,6 +112,75 @@ ListNode *Revert(ListNode *head) {
     return n;
 }
 
+
+ListNode *LoopList() {
+    ListNode *List = CreateList(0);
+    for(int i = 20; i <= 40; i++) {
+        AddNodeTail(List, i);
+    }
+    PrintList(List);
+    ListNode *p, *head;
+    head = List;
+    while(head && head->val != 33) {
+        head = head->next;
+    }
+    p = head;
+    while(head->next){
+        head = head->next;
+    }
+    head->next = p;
+    return List;
+}
+
+bool CheckLoop(ListNode *head) {
+    ListNode *fast, *low;
+    fast = low = head;
+    printf("Starting check\n");
+    while(1) {
+        fast = fast->next->next;
+        low = low->next;
+        if(fast == low) return true;
+        if(!fast || !fast->next) return false;
+    }
+}
+
+void FindCommonNode(ListNode *head) {
+    ListNode *fast, *low, *p;
+    p = fast = low = head;
+    while(1) {
+        fast = fast->next->next;
+        low = low->next;
+        if(fast == low) break;
+    }
+    int Length = 0;
+    while(p != low) {
+        Length++;
+        p = p->next;
+        low = low->next;
+    }
+    printf("Loop entry is %d, entry length %d\n", p->val, ++Length);
+    int LoopLength = 0;
+    ListNode *entry = p;
+    while(entry != p->next) {
+        LoopLength++;
+        p = p->next;
+    }
+    printf("Loop length %d\n", ++LoopLength);
+}
+
+int LastNNode(ListNode *head, int n) {
+    ListNode *q, *p;
+    q = p = head;
+    for(int i = 0; i < n; i++) {
+        p = p->next;
+    }
+    while(p) {
+        q = q->next;
+        p = p->next;
+    }
+    return q->val;
+}
+
 int main() {
     int i = 1, j = 1;
     printf("i++ = %d, i = %d, ++j = %d, j = %d\n", i++, i, ++j, j);
@@ -122,6 +192,7 @@ int main() {
         AddNodeTail(List, i);
     }
     PrintList(List);
+    printf("Last %d val is %d\n", 4, LastNNode(List, 4));
     List = DeleteNode(List, 5);
     PrintList(List);
     List = DeleteNode(List, 0);
@@ -142,5 +213,9 @@ int main() {
     PrintList(List);
     List = Revert(List);
     PrintList(List);
+    printf("loop %d\n", CheckLoop(List)?0:1);
+    ListNode *Loop = LoopList();
+    printf("loop %d\n", CheckLoop(Loop)?0:1);
+    FindCommonNode(Loop);
     return 0;
 }
